@@ -67,7 +67,7 @@ function iniciarTimer(duracion, callback) {
     output.innerHTML = `<p>Tiempo restante: ${tiempoRestante} segundos</p>`;
     
     // Reproducir sonido de inicio cuando el timer comienza
-    const audio = new Audio("sounds/start.mp3");
+    const audio = new Audio("start.mp3");
     audio.play();
 
     timerInterval = setInterval(() => {
