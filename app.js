@@ -7,14 +7,14 @@ const rutinas = {
 
 let cicloActual = 0;
 let timerInterval;
+let esperaTimeout;
 const maxCiclos = 5;
 const historial = [];
 let nombreUsuario;
 let puntuacion = 0;
 const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
 const output = document.getElementById("output");
-
-let temporizadorActivo = false;  // Variable para controlar si el temporizador está en ejecución
+let temporizadorActivo = false;
 
 // Solicitar nombre al cargar la página
 document.addEventListener("DOMContentLoaded", () => {
@@ -32,13 +32,24 @@ document.addEventListener("DOMContentLoaded", () => {
     mostrarLeaderboard();
 });
 
-// Reiniciar la rutina 
+// Reiniciar la rutina
 function reiniciarRutina() {
     cicloActual = 0;
     if (timerInterval) {
         clearInterval(timerInterval);
     }
+    if (esperaTimeout) {
+        clearTimeout(esperaTimeout);
+    }
+
+    temporizadorActivo = false;
     document.getElementById("btnIniciarTimer").disabled = false;
+
+    const timerIcon = document.getElementById("timerIcon");
+    if (timerIcon) {
+        timerIcon.style.display = 'none';
+    }
+
     output.innerHTML = `<p>¡La rutina ha sido reiniciada! Presiona el timer para comenzar nuevamente.</p>`;
 }
 
@@ -50,24 +61,20 @@ function obtenerEjercicio(categoria) {
 
 // Iniciar temporizador
 function iniciarTimer(duracion, callback) {
-    // Si el temporizador ya está en ejecución, no hacer nada
-    if (temporizadorActivo) {
-        return;
-    }
+    if (temporizadorActivo) return;
 
-    temporizadorActivo = true;  // Marcar el temporizador como activo
+    temporizadorActivo = true;
 
     let tiempoRestante = duracion;
     const btnIniciarTimer = document.getElementById("btnIniciarTimer");
     const timerIcon = document.getElementById("timerIcon");
 
-    btnIniciarTimer.disabled = true;  // Deshabilitar el botón mientras el temporizador está corriendo
-    timerIcon.style.display = 'inline'; // Mostrar el ícono de espera
+    btnIniciarTimer.disabled = true;
+    timerIcon.style.display = 'inline';
 
     output.innerHTML = `<p>Tiempo restante: ${tiempoRestante} segundos</p>`;
-    
-    // Reproducir sonido de inicio cuando el timer comienza
-    const audio = new Audio("start.mp3");
+
+    const audio = new Audio("sounds/start.mp3");
     audio.play();
 
     timerInterval = setInterval(() => {
@@ -75,10 +82,10 @@ function iniciarTimer(duracion, callback) {
         output.innerHTML = `<p>Tiempo restante: ${tiempoRestante} segundos</p>`;
         if (tiempoRestante === 0) {
             clearInterval(timerInterval);
-            temporizadorActivo = false;  // Marcar el temporizador como inactivo
-            btnIniciarTimer.disabled = false;  // Habilitar el botón nuevamente
-            timerIcon.style.display = 'none'; // Ocultar el ícono de espera
-            callback();  // Ejecutar el callback
+            temporizadorActivo = false;
+            btnIniciarTimer.disabled = false;
+            timerIcon.style.display = 'none';
+            callback();
         }
     }, 1000);
 }
@@ -97,15 +104,11 @@ document.getElementById("btnIniciarTimer").addEventListener("click", () => {
         historial.push({ ejercicio, fecha: new Date() });
 
         output.innerHTML = `<p>Ciclo ${cicloActual}/${maxCiclos}: ¡Prepárate para realizar ${ejercicio}!</p>`;
-
-        // Deshabilitar el botón inmediatamente después de mostrar el ejercicio
         document.getElementById("btnIniciarTimer").disabled = true;
 
-        // Iniciar el temporizador después de 5 segundos
-        setTimeout(() => {
+        esperaTimeout = setTimeout(() => {
             output.innerHTML = `<p>Ciclo ${cicloActual}/${maxCiclos}: ¡Realiza ${ejercicio} durante 30 segundos!</p>`;
 
-            // Iniciar el temporizador para 30 segundos
             iniciarTimer(30, () => {
                 if (cicloActual < maxCiclos) {
                     output.innerHTML += `<p>¡Listo para el siguiente ejercicio! Presiona el timer de nuevo para continuar.</p>`;
@@ -114,13 +117,13 @@ document.getElementById("btnIniciarTimer").addEventListener("click", () => {
                     completarRutina();
                 }
             });
-        }, 5000); // 5 segundos de espera antes de comenzar el ejercicio
+        }, 5000);
     } else {
         output.innerHTML = `<p>Ya has completado los 5 ciclos. ¡Buen trabajo! 💪</p>`;
     }
 });
 
-// Mostrar historial completo
+// Mostrar historial
 document.getElementById("btnHistorial").addEventListener("click", () => {
     output.innerHTML = "<h3>Historial:</h3>";
     historial.forEach((registro, index) => {
@@ -128,7 +131,7 @@ document.getElementById("btnHistorial").addEventListener("click", () => {
     });
 });
 
-// Sumar puntos al completar rutina
+// Al completar rutina
 function completarRutina() {
     puntuacion += 10;
     alert(`¡Felicidades ${nombreUsuario}! Has completado una rutina y ganado 10 puntos.`);
